@@ -160,11 +160,15 @@ h1#site-title {
     <h1 id="site-title" class="font-tech">
       V 
       <svg class="viper-integrated" viewBox="0 0 40 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:1em;height:1.25em;margin:0 0.05em;">
+      <!-- Small snake emoji-like SVG placed right after the title -->
         <path d="M20 2 C15 2 12 5 12 10 L12 20 C12 22 10 24 8 24 L4 24 L8 28 L12 28 C16 28 18 26 18 22 L18 35 C18 40 15 43 10 45 L14 48 L20 42 L26 48 L30 45 C25 43 22 40 22 35 L22 22 C22 26 24 28 28 28 L32 28 L36 24 L32 24 C30 24 28 22 28 20 L28 10 C28 5 25 2 20 2 Z" fill="currentColor"/>
+      <svg class="viper-emoji" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="false" aria-label="serpiente">
         <circle cx="16" cy="12" r="1.5" fill="#000"/>
+        <path class="body" d="M2 12c2-6 8-8 14-6 1 .3 2.5 1 3 2 .6 1.2-.2 2.6-1.6 3-1.4.4-2.8-.2-3.6-1.2C12 8 9.8 8 8 9c-1.8 1-2 3-1 4 1 1.4 3.5 2 5 1.6 1.4-.4 2.6-1.4 3.8-1.2" stroke="none" />
         <circle cx="24" cy="12" r="1.5" fill="#000"/>
+        <circle class="eye" cx="17.2" cy="8.6" r="0.9" />
+        <path class="tongue" d="M19.6 9.2c.4.2.8.6 1 1" stroke="none" />
       </svg>
-      PER404
     </h1>
   </div>
   <p id="tagline" class="text-center mt-4 text-sm md:text-base neon-text-dim tracking-widest">Error: privacy not found</p>
@@ -174,12 +178,12 @@ h1#site-title {
   <div id="posts-container" class="max-w-3xl mx-auto space-y-8"></div>
 
   <!-- Formulario de publicación solo para creadora -->
-  <form id="publish-form">
+  <form id="publish-form" onsubmit="return false;">
     <h3 class="text-center font-tech neon-text">Agregar nuevo secreto</h3>
     <input type="password" id="admin-pass" placeholder="Contraseña maestra">
-    <input type="text" id="post-title" placeholder="Título del secreto">
-    <textarea id="post-content" placeholder="Contenido del secreto"></textarea>
-    <input type="text" id="post-confirm" placeholder="Confirmación/estado">
+    <input type="text" id="post-title" placeholder="Título del secreto" aria-label="Título">
+    <textarea id="post-content" placeholder="Contenido del secreto" aria-label="Contenido"></textarea>
+    <input type="text" id="post-confirm" placeholder="Confirmación/estado" aria-label="Confirmación">
     <button type="button" id="publish-btn">Publicar</button>
   </form>
 </main>
@@ -187,11 +191,32 @@ h1#site-title {
 </div>
 
 <script>
-const MASTER_PASS = 'ViperSecreta123'; // Cambia esta contraseña a la tuya
+// Atención: para producción NO guardes la contraseña en el cliente.
+// Esto es solo para demo/local. Valida en servidor y usa HTTPS.
+const DEMO_MASTER_PASS = 'ViperSecreta123'; // demo only
 
+// Datos iniciales corregidos (timestamp como string)
 let posts = [
-  {id:'post-001', code:'[VPR-2024-001]', title:'FILTRACIÓN DE DATOS CORPORATIVOS', content:'Se detectó una brecha exponiendo 2.3 millones de registros.', confirmation:'Datos verificados', timestamp:'2024.12.15 // 03:47:22 UTC'},
+  {
+    id: 'post-001',
+    code: '[VPR-2024-001]',
+    title: 'FILTRACIÓN DE DATOS CORPORATIVOS',
+    content: 'Se detectó una brecha exponiendo 2.3 millones de registros.',
+    confirmation: 'Datos verificados',
+    timestamp: '2024-07-01 // 12:34 UTC'
+  }
 ];
+
+// Escape simple para evitar XSS al inyectar textos del usuario
+function escapeHTML(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 function renderPosts() {
   const container = document.getElementById('posts-container');
@@ -199,14 +224,15 @@ function renderPosts() {
   posts.forEach(p=>{
     const postEl = document.createElement('article');
     postEl.className='post-card neon-border p-6 md:p-8';
+    // Usamos escapeHTML en los valores para evitar inyección
     postEl.innerHTML=`
       <div class="flex items-center justify-between mb-5">
-        <span class="text-xs neon-text-dim font-mono">${p.code}</span>
-        <span class="text-xs neon-text-dim font-mono">${p.timestamp}</span>
+        <span class="text-xs neon-text-dim font-mono">${escapeHTML(p.code)}</span>
+        <span class="text-xs neon-text-dim font-mono">${escapeHTML(p.timestamp)}</span>
       </div>
-      <h2 class="font-tech text-lg md:text-xl neon-text mb-5 font-bold tracking-wide">${p.title}</h2>
-      <p class="text-sm md:text-base leading-relaxed mb-5 neon-text opacity-80">${p.content}</p>
-      <p class="text-xs neon-text-dim mb-6 font-mono">&gt; ${p.confirmation}</p>
+      <h2 class="font-tech text-lg md:text-xl neon-text mb-5 font-bold tracking-wide">${escapeHTML(p.title)}</h2>
+      <p class="text-sm md:text-base leading-relaxed mb-5 neon-text opacity-80">${escapeHTML(p.content)}</p>
+      <p class="text-xs neon-text-dim mb-6 font-mono">&gt; ${escapeHTML(p.confirmation)}</p>
     `;
     container.appendChild(postEl);
   });
@@ -214,25 +240,27 @@ function renderPosts() {
 
 renderPosts();
 
-// Publicar secreto solo si contraseña correcta
+// Publicar secreto (demo): valida contraseña localmente (solo demo)
 document.getElementById('publish-btn').onclick = () => {
   const pass = document.getElementById('admin-pass').value;
-  if(pass !== MASTER_PASS){
+  if(pass !== DEMO_MASTER_PASS){
     alert('Contraseña incorrecta. Acceso denegado.');
     return;
   }
 
-  const title = document.getElementById('post-title').value;
-  const content = document.getElementById('post-content').value;
-  const confirm = document.getElementById('post-confirm').value;
+  const title = document.getElementById('post-title').value.trim();
+  const content = document.getElementById('post-content').value.trim();
+  const confirm = document.getElementById('post-confirm').value.trim();
 
   if(!title || !content) { alert('Título y contenido son obligatorios'); return; }
 
   const newPost = {
-    id:'post-'+(posts.length+1).toString().padStart(3,'0'),
-    code:'[VPR-2026-'+(posts.length+1).toString().padStart(3,'0')+']',
-    title, content, confirmation:confirm||'Sin confirmación',
-    timestamp: new Date().toISOString().replace('T',' // ').split('.')[0]+' UTC'
+    id: 'post-' + (posts.length + 1).toString().padStart(3,'0'),
+    code: '[VPR-2026-' + (posts.length + 1).toString().padStart(3,'0') + ']',
+    title,
+    content,
+    confirmation: confirm || 'Sin confirmación',
+    timestamp: new Date().toISOString().replace('T',' // ').split('.')[0] + ' UTC'
   };
 
   posts.unshift(newPost);
@@ -246,4 +274,3 @@ document.getElementById('publish-btn').onclick = () => {
 
 </body>
 </html>
-
